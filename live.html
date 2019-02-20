@@ -56,112 +56,108 @@
 
 <script src="mqttws31.js" type="text/javascript"></script>
 <script type="text/javascript">
-// Create a client instance
-client = new Paho.MQTT.Client(getSignedUrl(), "client_id");
-//Example client = new Paho.MQTT.Client("m11.cloudmqtt.com", 32903, "web_" + parseInt(Math.random() * 100, 10));
+//The the following code establishes the connection to the AWS IoT Broker
+//The code uses the AWS SDK for JavaScript v2.401.0
+//The code is adapted from the following AWS delevoper guide: https://docs.aws.amazon.com/iot/latest/developerguide/mqtt-ws.html 
+//AWS credentials are specified using AWS Signature Version 4
 
-// set callback handlers
-client.onConnectionLost = onConnectionLost;
-client.onMessageArrived = onMessageArrived;
-var options = {
-  useSSL: true,
-  onSuccess: onConnect,
-  onFailure: doFail
-}
-
-// connect the client
-client.connect(options);
-
-// called when the client connects
-function onConnect() {
-  // Once a connection has been made, make a subscription and send a message.
-  console.log("Connection Successful. Subscribing to IC.embedded/fabric/#");
-  client.subscribe("IC.embedded/fabric/#");
-  message = new Paho.MQTT.Message("Hello CloudMQTT");
-  message.destinationName = "IC.embedded/fabric/data";
-  client.send(message);
-  console.log("IC.embedded/fabric/data");
-}
-
-function doFail(e) {
-  console.log(e);
-}
-
-// called when the client loses its connection
-function onConnectionLost(responseObject) {
-  if (responseObject.errorCode !== 0) {
-    console.log("onConnectionLost:" + responseObject.errorMessage);
-  }
-}
-
-var dpsCO2 = [];   //these 4 arrays will be used later in producing graphs
-var dpsTVOC = [];
-var dpsTemp = [];
-var dpsHumid = [];
+ 
+ // Create a client instance using the signed URL generated in getSignedUrl() 
+  client = new Paho.MQTT.Client(getSignedUrl(), "client_id"); 
   
-// called when a message arrives
-function onMessageArrived(message) {
-  console.log(message.payloadString);
-  newData = JSON.parse(message.payloadString);    //JSON.parse makes extraction of data easier
-  printValues(newData);
-  co2graph(newData);
-  tvocgraph(newData);
-  tempgraph(newData);
-  humidgraph(newData);
-}
+  // connect the client
+  client.connect(options);
+  
+  var options = {
+    useSSL: true,
+    onSuccess: onConnect,
+    onFailure: doFail
+  }
+
+  // Once a connection has been made, subscribe to IC.embedded/fabric/#
+  function onConnect() {
+    console.log("Connection Successful. Subscribing to IC.embedded/fabric/#");
+    client.subscribe("IC.embedded/fabric/#");
+  }
 
 
+//set and define the callback handler for the new message arriving
+  client.onMessageArrived = onMessageArrived;
+  function onMessageArrived(message) {
+    console.log(message.payloadString);
+    newData = JSON.parse(message.payloadString);
+    printValues(newData);
+    co2graph(newData);
+    tvocgraph(newData);
+    tempgraph(newData);
+    humidgraph(newData);
+  }
+  
+  // set and define callback handler for connection lost
+  client.onConnectionLost = onConnectionLost;
+  function onConnectionLost(responseObject) {
+    if (responseObject.errorCode !== 0) {
+      console.log("onConnectionLost:" + responseObject.errorMessage);
+    }
+  }
+  
+  function doFail(e) {
+    console.log(e);
+  }
+
+//Generates the signed URL required to initiate the WebSocket connection to the AWS broker
+  function getSignedUrl() {
+
+	//The following variables uniquely describe our AWS endpoint
+    var host = 'apofivg2u2bsg-ats.iot.eu-west-2.amazonaws.com'; 
+    var region = 'eu-west-2';
+    var credentials = {
+      secretAccessKey: "t89SLrhuac4Jd3tJgPLzwI2cMUgX2KfBL7T+sVCk",
+      accessKeyId: "AKIAIWZEXZT5FNOSCKTA",
+      sessionToken: null
+    }
+
+	//Creates a canonical request
+	var datetime = AWS.util.date.iso8601(new Date()).replace(/[:\-]|\.\d{3}/g, '');
+    var date = datetime.substr(0, 8);
+    var method = 'GET';
+    var protocol = 'wss';
+    var uri = '/mqtt';
+    var service = 'iotdevicegateway';
+    var algorithm = 'AWS4-HMAC-SHA256';
+    var credentialScope = date + '/' + region + '/' + service + '/' + 'aws4_request';
+    var canonicalQuerystring = 'X-Amz-Algorithm=' + algorithm;
+    canonicalQuerystring += '&X-Amz-Credential=' + encodeURIComponent(credentials.accessKeyId + '/' + credentialScope);
+    canonicalQuerystring += '&X-Amz-Date=' + datetime;
+    canonicalQuerystring += '&X-Amz-SignedHeaders=host';
+
+    var canonicalHeaders = 'host:' + host + '\n';
+    var payloadHash = AWS.util.crypto.sha256('', 'hex')
+    var canonicalRequest = method + '\n' + uri + '\n' + canonicalQuerystring + '\n' + canonicalHeaders + '\nhost\n' + payloadHash;
+
+	//Sign the canonical string using our unique details
+    var stringToSign = algorithm + '\n' + datetime + '\n' + credentialScope + '\n' + AWS.util.crypto.sha256(canonicalRequest, 'hex');
+    var signingKey = getSignatureKey(credentials.secretAccessKey, date, region, service);
+    var signature = AWS.util.crypto.hmac(signingKey, stringToSign, 'hex');
+
+	//Add signing information to the request
+    canonicalQuerystring += '&X-Amz-Signature=' + signature;
+
+	//Create the final request URL
+    var requestUrl = protocol + '://' + host + uri + '?' + canonicalQuerystring;
+    return requestUrl;
+  }
+ 
+//Returns the signing key for the request
 function getSignatureKey(key, date, region, service) {
-  var kDate = AWS.util.crypto.hmac('AWS4' + key, date, 'buffer');
-  var kRegion = AWS.util.crypto.hmac(kDate, region, 'buffer');
-  var kService = AWS.util.crypto.hmac(kRegion, service, 'buffer');
-  var kCredentials = AWS.util.crypto.hmac(kService, 'aws4_request', 'buffer');
+    var kDate = AWS.util.crypto.hmac('AWS4' + key, date, 'buffer');
+    var kRegion = AWS.util.crypto.hmac(kDate, region, 'buffer');
+    var kService = AWS.util.crypto.hmac(kRegion, service, 'buffer');
+    var kCredentials = AWS.util.crypto.hmac(kService, 'aws4_request', 'buffer');
 
-  return kCredentials;
-}
-
-function getSignedUrl() {
-  console.log("in function getsignedurl");
-  var datetime = AWS.util.date.iso8601(new Date()).replace(/[:\-]|\.\d{3}/g, '');
-  var date = datetime.substr(0, 8);
-  var method = 'GET';
-  var protocol = 'wss';
-  var uri = '/mqtt';
-  var service = 'iotdevicegateway';
-  var algorithm = 'AWS4-HMAC-SHA256';
-
-
-  var host = 'apofivg2u2bsg-ats.iot.eu-west-2.amazonaws.com'; //endpoint
-  var region = 'eu-west-2';
-  var credentials = {
-    secretAccessKey: "t89SLrhuac4Jd3tJgPLzwI2cMUgX2KfBL7T+sVCk",
-    accessKeyId: "AKIAIWZEXZT5FNOSCKTA",
-    sessionToken: null
+    return kCredentials;
   }
 
-  var credentialScope = date + '/' + region + '/' + service + '/' + 'aws4_request';
-  var canonicalQuerystring = 'X-Amz-Algorithm=' + algorithm;
-  canonicalQuerystring += '&X-Amz-Credential=' + encodeURIComponent(credentials.accessKeyId + '/' + credentialScope);
-  canonicalQuerystring += '&X-Amz-Date=' + datetime;
-  canonicalQuerystring += '&X-Amz-SignedHeaders=host';
-
-  var canonicalHeaders = 'host:' + host + '\n';
-  var payloadHash = AWS.util.crypto.sha256('', 'hex')
-  var canonicalRequest = method + '\n' + uri + '\n' + canonicalQuerystring + '\n' + canonicalHeaders + '\nhost\n' + payloadHash;
-
-  var stringToSign = algorithm + '\n' + datetime + '\n' + credentialScope + '\n' + AWS.util.crypto.sha256(canonicalRequest, 'hex');
-  var signingKey = getSignatureKey(credentials.secretAccessKey, date, region, service);
-  var signature = AWS.util.crypto.hmac(signingKey, stringToSign, 'hex');
-
-  canonicalQuerystring += '&X-Amz-Signature=' + signature;
-  if (credentials.sessionToken) {
-    canonicalQuerystring += '&X-Amz-Security-Token=' + encodeURIComponent(credentials.sessionToken);
-  }
-
-  var requestUrl = protocol + '://' + host + uri + '?' + canonicalQuerystring;
-  //console.log(requestUrl);
-  return requestUrl;
-}
 
 function openPage(pageName, elmnt, color) {
   var i, tabcontent, tablinks;
@@ -176,8 +172,6 @@ function openPage(pageName, elmnt, color) {
   document.getElementById(pageName).style.display = "block";
   elmnt.style.backgroundColor = color;
 }
-
-
 
 
 //this is the function that generates the live co2 graph
