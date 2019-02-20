@@ -5,7 +5,11 @@ import os
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 
-###########AWS MQTT SET-UP#############################
+################AWS MQTT SET-UP#############################
+##The following code is adapted from the documentation for##
+##the AWS-IoT SDK found under https://github.com/aws/aws/ ##
+##iot-device-sdk-python/blob/master/README.rst            ##
+############################################################
 host = "apofivg2u2bsg-ats.iot.eu-west-2.amazonaws.com"
 topic = "IC.embedded/fabric/data"
 
