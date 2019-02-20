@@ -1,7 +1,9 @@
 # Team_Fabric
 
-Please find four files in the repository as below:
-1) Python code for the Raspberry Pi (called publish.py)
-2) HTML/Javascript/CSS file main.html for main page of web application called sth (which contains iframes to 3. and 4. )
-3) HTML/Javascript/CSS file live.html for sub-page "Live" of web application (MQTT broker setup with AWS host)
-4) HTML/Javascript/CSS file history.html for sub-page "History" of web application (DynamoDB storage and Splunk graph hosting)
+This repository contains the code for our IoT sensor based on the RaspberryPi as well as the WebApp created to display live and historical data. 
+
+#WebApp Code
+The code for the web-app is divided into 3 sections which correspond to the different sections of the web-app. 
+1) main.html is the main page of web application and contains iframes of the other two sections.
+2) live.html is the "Live" page of the of the web application which sets up the connection to the AWS MQTT broker and displays live sensor readings as well as live graphs of the most recent readings. 
+3) history.html is the "History" page of the web application and contains iframes of graphs of historical data stored in the AWS database, visualized using Splunk. 
