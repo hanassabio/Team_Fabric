@@ -2,11 +2,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <body>
+<!-- buttons for moving onto values tab and graphs tab -->  
 <buttonhov class="buttonhov buttonval" class="tablink" onclick="openPage('Values', this); ">Values</buttonhov>
 <buttonhov class="buttonhov buttonval" class="tablink" onclick="openPage('Graphs', this);">Graphs</buttonhov>
 
 
 <div id="Values" class="tabcontent">
+<!-- contents of values tab are put inside a table -->  
   <table cellspacing="0" style="border-spacing:0;">
     <tbody>
       <tr>
@@ -38,9 +40,10 @@
 
 
 </div>
+  
 <div id="Graphs" class="tabcontent">
-
-
+<!-- contents of graphs tab -->  
+<!-- printing charts -->
   <div id="chartContainer1" style="height: 20em; width:100%;"> </div>
 
   <div id="chartContainer2" style="height: 20em; width:100%;"> </div>
@@ -91,14 +94,15 @@ function onConnectionLost(responseObject) {
   }
 }
 
-var dpsCO2 = [];
+var dpsCO2 = [];   //these 4 arrays will be used later in producing graphs
 var dpsTVOC = [];
 var dpsTemp = [];
 var dpsHumid = [];
+  
 // called when a message arrives
 function onMessageArrived(message) {
   console.log(message.payloadString);
-  newData = JSON.parse(message.payloadString);
+  newData = JSON.parse(message.payloadString);    //JSON.parse makes extraction of data easier
   printValues(newData);
   co2graph(newData);
   tvocgraph(newData);
@@ -176,7 +180,7 @@ function openPage(pageName, elmnt, color) {
 
 
 
-
+//this is the function that generates the live co2 graph
 function co2graph(obj) {
 
 
@@ -202,15 +206,15 @@ var dataLength = 60; // number of dataPoints visible at any point
 
 var updateChart = function(count) {
 
-  xVal = obj.time;
-  yVal = obj.co2;
-  dpsCO2.push({
+  xVal = obj.time;  //epoch time from json data
+  yVal = obj.co2;   //co2 from json data
+  dpsCO2.push({     //this new point is pushed into dpsCO2 array
     x: xVal,
     y: yVal
   });
 
 
-  if (dpsCO2.length > dataLength) {
+  if (dpsCO2.length > dataLength) {    //if array length is greater than dataLength, shift the oldest point out of the array
     dpsCO2.shift();
   }
 
@@ -221,6 +225,8 @@ updateChart(dataLength);
 
 }
 
+  
+//the graphs for tvoc, temperature, and humidity are done in the same way
 function tvocgraph(obj) {
 var chart = new CanvasJS.Chart("chartContainer2", {
   title: {
