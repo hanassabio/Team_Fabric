@@ -1,4 +1,4 @@
-# Team_Fabric
+# WorkAir by Team Fabric
 
 This repository contains the code for our IoT sensor based on the RaspberryPi as well as the WebApp created to display live and historical data. 
 
