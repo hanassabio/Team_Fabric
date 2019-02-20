@@ -363,8 +363,8 @@ updateChart(dataLength);
 
 }
 
+//printing new data values. if the values are over a certain threshold, change the background colour to warn the user  
 function printValues(newData) {
-console.log("hi");
 var tempfahrenheit = (newData.temperature) * 9 / 5 + 32;
 console.log(newData.co2);
 document.getElementById("co2field").innerHTML = newData.co2 + "ppm";
