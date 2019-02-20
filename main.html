@@ -5,16 +5,18 @@
 <button style="width:50%" class="tablink" onclick="openPage('Live', this, ' #88B04B')">Live</button>
 <button style="width: 50%;" class="tablink" onclick="openPage('History', this, '#88B04B')">History</button>
 
+<!-- subsection Live for access to real-time data info available in iframe, hosted currently by jsfiddle -->
 <div id="Live" class="tabcontent">
 <iframe width="100%" src="//fiddle.jshell.net/ksonq68p/5/show" allowfullscreen="allowfullscreen" allowpaymentrequest frameborder="0" style="min-height:98vh" ></iframe>
 </div>
 
-
+<!-- subsection History for access to historical data info available in iframe, hosted currently by jsfiddle -->
 <div id="History" class="tabcontent">
 <iframe width="100%" src="//fiddle.jshell.net/hanassabio/61nchxfp/3/show/" allowfullscreen="allowfullscreen" allowpaymentrequest frameborder="0" style="min-height:98vh"></iframe>
 </div>
 
 <script>
+//function to successful use tabs in webpage 
 function openPage(pageName, elmnt, color) {
 var i, tabcontent, tablinks;
 tabcontent = document.getElementsByClassName("tabcontent");
@@ -105,7 +107,7 @@ font-style: italic;
 font-size: 2vw;
 }
 
-::-webkit-scrollbar {
+::-webkit-scrollbar { /*removes scrollbar for inner iframes*/
 display: none;
 }
 
